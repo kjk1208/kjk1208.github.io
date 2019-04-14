@@ -26,7 +26,7 @@ author:
   email:             kjk1208@dgist.ac.kr
 
 # Fallback image and color
-image:               /assets/img/main_img.jpeg
+image:               /assets/img/focus-study.jpg
 color:               '#4f86aa'
 
 # The font used for headings. Expects a string that is a valid CSS font-family value.
