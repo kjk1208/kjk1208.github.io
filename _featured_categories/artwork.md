@@ -1,10 +1,10 @@
 ---
 layout: list
-title: Artwork
-slug: artwork
+title: Life
+slug: life
 menu: True
-submenu: True
+submenu: False
 order: 1
 description: >
-  디자인이나 창작물들을 담습니다.
+  일상생활에 대한 것을 끄적임
 ---
