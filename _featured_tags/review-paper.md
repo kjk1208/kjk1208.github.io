@@ -1,7 +1,7 @@
 ---
 layout: tag-blog
-title: Event
-slug: event
+title: Paper
+slug: paper
 category: review
 menu: false
 order: 1
