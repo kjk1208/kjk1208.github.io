@@ -1,10 +1,10 @@
 ---
-Layout: post
-Title : "tensorflow study(1)"
-Subtitle: "tensorflow 사이트 보고 공부"
-Categories: devlog
-tag : dl
-Comments:true
+layout: post
+title: "tensorflow study(1)"
+subtitle: "tensorflow 사이트 보고 공부"
+categories: devlog
+tag: dl
+comments:true
 ---
 
 
@@ -28,4 +28,8 @@ Comments:true
  
 
 - 
+
+
+
+> 인용구 테스트
 
