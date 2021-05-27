@@ -1,20 +1,11 @@
-\---
-
-layout: post
-
-title: "tensorflow study (1)"
-
-subtitle: "tensorflow 사이트 보고 공부"
-
-categories: devlog
-
-tags: dl
-
-comments: true
-
-\---
-
-
+---
+Layout: post
+Title : "tensorflow study(1)"
+Subtitle: "tensorflow 사이트 보고 공부"
+Categories: devlog
+tag : dl
+Comments:true
+---
 
 
 
@@ -37,3 +28,4 @@ comments: true
  
 
 - 
+
