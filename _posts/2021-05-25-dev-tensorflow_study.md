@@ -3,7 +3,7 @@ layout: post
 title: "tensorflow study(1)"
 subtitle: "tensorflow 사이트 보고 공부"
 categories: devlog
-tag: dl
+tags: dl
 comments:true
 ---
 
@@ -32,4 +32,6 @@ comments:true
 
 
 > 인용구 테스트
+
+
 
