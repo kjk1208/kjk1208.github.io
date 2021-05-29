@@ -3,7 +3,7 @@ layout: post
 title: "tensorflow study(1)"
 subtitle: "tensorflow 사이트 보고 공부"
 categories: devlog
-tags: dl
+tags: ml
 comments:true
 ---
 
