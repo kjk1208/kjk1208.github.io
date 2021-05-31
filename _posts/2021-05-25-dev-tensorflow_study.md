@@ -262,9 +262,9 @@ print(np.argmax(prediction_single[0]))
 
 ```
 
-![image-20210531150834271](/Users/kjk1208/kjk1208/_img/2021-05-25-dev-tensorflow_study/image-20210531150834271.png)
+![image-20210531150834271](../_img/2021-05-25-dev-tensorflow_study/image-20210531150834271.png)
 
-![image-20210531150949232](/Users/kjk1208/kjk1208/_img/2021-05-25-dev-tensorflow_study/image-20210531150949232.png)
+![image-20210531150949232](../_img/2021-05-25-dev-tensorflow_study/image-20210531150949232.png)
 
 
 
