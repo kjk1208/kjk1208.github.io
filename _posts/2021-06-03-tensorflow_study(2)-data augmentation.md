@@ -31,7 +31,7 @@ from tensorflow.keras import layers
 from tensorflow.keras.datasets import mnist
 ```
 
-
+- 내가 실험한 파이썬 파일 명 : ~/detection/tensorflow_test/tensor_data_augmentation.py,     tensor_data_augmentation2.py
 
 ## 절차
 
