@@ -38,6 +38,7 @@
     "elem-dataset": "1.1.1",
     "katex": "0.7.1",
     "rxjs": "5.4.1",
+    "typescript": "^5.3.3",
     "web-animations-js": "2.2.5",
     "y-drawer": "6.1.1",
     "y-push-state": "6.3.0"
@@ -49,5 +50,6 @@
   "bugs": {
     "url": "https://github.com/qwtel/hydejack/issues"
   },
-  "homepage": "https://github.com/qwtel/hydejack#readme"
+  "homepage": "https://github.com/qwtel/hydejack#readme",
+  "main": "index.js"
 }
