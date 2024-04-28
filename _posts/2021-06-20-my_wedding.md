@@ -37,5 +37,7 @@ comments: true
   - 메이크업 : 에리카(수성스퀘어)
 - 
 
+- 결혼 사진 사이트 : https://kjk1208.github.io/ssddong_sskang_wedding
+
 결혼 사진 넣자, 신혼여행도 정리해서 넣어
 
