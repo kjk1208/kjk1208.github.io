@@ -21,7 +21,7 @@ jobs:
       - run: npm install
       - run: npm run build
       - name: Build search index (Pagefind)
-        run: npx pagefind --source ./dist --bundle
+        run: npx pagefind --source ./dist
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
