@@ -27,7 +27,7 @@ const { title = SITE.title, description = SITE.description } = Astro.props;
           <a href="/search/" aria-label="Search">검색</a>
         </nav>
         <div class="nav-spacer"></div>
-        <button class="button" id="themeToggle" title="Toggle theme">모드</button>
+        <button class="button" id="themeToggle" title="Toggle theme">자동</button>
       </div>
     </header>
     <main class="container">
@@ -37,20 +37,35 @@ const { title = SITE.title, description = SITE.description } = Astro.props;
       © {new Date().getFullYear()} {SITE.author}. • Built with Astro
     </footer>
     <script>
-      const btn = document.getElementById('themeToggle');
+      const btn  = document.getElementById('themeToggle');
       const root = document.documentElement;
-      const getPref = () => localStorage.getItem('theme') || 'auto';
-      const apply = (mode) => {
-        root.dataset.theme = mode;
-        if (mode === 'auto') root.removeAttribute('data-theme');
-        localStorage.setItem('theme', mode);
+
+      const setLabel = (mode) => {
+        btn.innerText = mode === 'light' ? '라이트'
+                    : mode === 'dark'  ? '다크'
+                    : '자동';
       };
-      apply(getPref());
+
+      const apply = (mode) => {
+        // auto면 data-theme 속성을 제거 → 시스템 테마 사용
+        if (mode === 'auto') root.removeAttribute('data-theme');
+        else root.setAttribute('data-theme', mode);
+
+        localStorage.setItem('theme', mode);
+        setLabel(mode);
+      };
+
+      // 초기 적용: 저장된 값이 없으면 'auto'
+      const saved = localStorage.getItem('theme') || 'auto';
+      apply(saved);
+
+      // 클릭 시 라이트 → 다크 → 자동 → 라이트 순환
       btn?.addEventListener('click', () => {
-        const cur = getPref();
-        const next = cur === 'light' ? 'dark' : cur === 'dark' ? 'auto' : 'light';
+        const cur  = localStorage.getItem('theme') || 'auto';
+        const next = cur === 'light' ? 'dark'
+                  : cur === 'dark'  ? 'auto'
+                  : 'light';
         apply(next);
-        btn.innerText = next === 'light' ? '라이트' : next === 'dark' ? '다크' : '자동';
       });
     </script>
   </body>
