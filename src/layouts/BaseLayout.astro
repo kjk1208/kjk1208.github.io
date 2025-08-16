@@ -1,0 +1,57 @@
+---
+import 'katex/dist/katex.min.css';
+import '../styles/base.css';
+import { SITE } from '../site.config';
+const { title = SITE.title, description = SITE.description } = Astro.props;
+---
+<!DOCTYPE html>
+<html lang={SITE.lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="icon" href="/favicon.svg" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <header class="nav">
+      <div class="nav-inner">
+        <a class="nav-brand" href="/">{SITE.title}</a>
+        <nav class="nav-links" aria-label="Primary">
+          <a href="/reviews/">논문 리뷰</a>
+          <a href="/dev/">개발</a>
+          <a href="/board/">게시판</a>
+          <a href="/calendar/">달력</a>
+          <a href="/pomodoro/">뽀모도로</a>
+          <a href="/about/">About</a>
+          <a href="/search/" aria-label="Search">검색</a>
+        </nav>
+        <div class="nav-spacer"></div>
+        <button class="button" id="themeToggle" title="Toggle theme">모드</button>
+      </div>
+    </header>
+    <main class="container">
+      <slot />
+    </main>
+    <footer class="site container small">
+      © {new Date().getFullYear()} {SITE.author}. • Built with Astro
+    </footer>
+    <script>
+      const btn = document.getElementById('themeToggle');
+      const root = document.documentElement;
+      const getPref = () => localStorage.getItem('theme') || 'auto';
+      const apply = (mode) => {
+        root.dataset.theme = mode;
+        if (mode === 'auto') root.removeAttribute('data-theme');
+        localStorage.setItem('theme', mode);
+      };
+      apply(getPref());
+      btn?.addEventListener('click', () => {
+        const cur = getPref();
+        const next = cur === 'light' ? 'dark' : cur === 'dark' ? 'auto' : 'light';
+        apply(next);
+        btn.innerText = next === 'light' ? '라이트' : next === 'dark' ? '다크' : '자동';
+      });
+    </script>
+  </body>
+</html>

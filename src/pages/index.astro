@@ -1,0 +1,14 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="홈">
+  <section class="hero">
+    <h1>안녕하세요, 논문 리뷰와 개발 노트를 기록하는 공간입니다.</h1>
+    <div class="small">수식(KaTeX), 다이어그램(Mermaid), 코드 하이라이트(복사 버튼)와 검색, 댓글을 지원합니다.</div>
+    <div style="display:flex; gap:.6rem; flex-wrap:wrap; margin-top:.4rem">
+      <a class="button" href="/reviews/">논문 리뷰 보러가기</a>
+      <a class="button" href="/pomodoro/">뽀모도로 시작</a>
+      <a class="button" href="/calendar/">달력</a>
+    </div>
+  </section>
+</BaseLayout>

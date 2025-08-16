@@ -1,0 +1,28 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import { getCollection } from 'astro:content';
+import Giscus from '../../components/Giscus.astro';
+import Mermaid from '../../components/Mermaid.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('reviews', p => !p.data.draft);
+  return posts.map(p => ({ params: { slug: p.slug }, props: { post: p } }));
+}
+
+const { post } = Astro.props;
+const sidebarLinks = [
+  { href: '/reviews/', label: '← 목록으로' }
+];
+const { Content } = await post.render();
+---
+<DocsLayout sidebarTitle="논문 리뷰" {sidebarLinks}>
+  <article class="card">
+    <header>
+      <h1 style="margin-top:0">{post.data.title}</h1>
+      <div class="small">{post.data.date} {post.data.tags.length ? `• ${post.data.tags.join(', ')}` : ''}</div>
+      <hr class="sep" />
+    </header>
+    <Content />
+  </article>
+  <Giscus />
+</DocsLayout>

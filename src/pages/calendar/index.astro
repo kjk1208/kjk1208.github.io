@@ -1,0 +1,17 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { CALENDAR } from '../../site.config';
+const params = new URLSearchParams({
+  src: CALENDAR.id,
+  ctz: CALENDAR.timezone,
+  mode: 'WEEK' // WEEK | MONTH | AGENDA
+}).toString();
+const url = `https://calendar.google.com/calendar/embed?${params}`;
+---
+<BaseLayout title="달력">
+  <h1>달력</h1>
+  <p class="small">Google Calendar를 공개(읽기 전용)로 설정한 뒤 <code>src/site.config.ts</code>의 CALENDAR.id를 교체하세요.</p>
+  <div class="card" style="overflow:hidden">
+    <iframe src={url} style="width:100%; height:70vh; border:0" loading="lazy"></iframe>
+  </div>
+</BaseLayout>
