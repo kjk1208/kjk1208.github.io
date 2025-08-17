@@ -6,7 +6,8 @@ import { AUTH, CALENDAR } from '../../site.config';
   <h1>달력</h1>
 
   <!-- (비로그인) 공개 캘린더 임베드 -->
-  <section class="card only-signed-out">
+  <!-- ✅ 로그인하면 이 섹션을 DOM에서 제거하여 CSP 경고 방지 -->
+  <section class="card only-signed-out" id="public-embed">
     <p class="small">로그인하면 내 캘린더를 읽고/쓸 수 있습니다.</p>
     <div style="overflow:hidden">
       <iframe
@@ -31,12 +32,11 @@ import { AUTH, CALENDAR } from '../../site.config';
     <div id="events">불러오는 중…</div>
   </section>
 
-  <!-- ✅ 클라이언트 스크립트: /src 임포트 없이 동작 -->
   <script>
-    // BaseLayout에 있는 <meta id="auth-config" ...>에서 관리자 이메일 읽기
+    // BaseLayout의 <meta id="auth-config" ...>에서 값 읽기
     const OWNER = document.getElementById('auth-config')?.dataset.owner || "";
 
-    // 로그인 토큰 헬퍼 (auth.js 없이 동일 동작)
+    // 토큰 헬퍼
     function getAccessToken() {
       const t = localStorage.getItem("access_token");
       const exp = Number(localStorage.getItem("token_exp") || 0);
@@ -62,37 +62,69 @@ import { AUTH, CALENDAR } from '../../site.config';
       url.searchParams.set("timeMin", new Date(now - 7*86400*1000).toISOString());
       url.searchParams.set("timeMax", new Date(now + 30*86400*1000).toISOString());
 
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-      if (!res.ok) { eventsBox.textContent = "이벤트를 불러오지 못했습니다."; return; }
-      const { items = [] } = await res.json();
-      eventsBox.innerHTML = items.length
-        ? `<ul style="margin:0; padding-left:1rem">${items.map(e=>{
-            const start=e.start?.dateTime||e.start?.date||''; const end=e.end?.dateTime||e.end?.date||'';
-            return `<li><strong>${e.summary||'(제목 없음)'}</strong> — ${start}${end?' ~ '+end:''}</li>`;
-          }).join("")}</ul>`
-        : "<p>예정된 이벤트가 없습니다.</p>";
+      try {
+        const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) {
+          // ✅ 403 원인 파악용 상세 로그
+          const txt = await res.text().catch(()=> "");
+          console.error("Calendar API error:", res.status, txt);
+          // granted scopes 확인
+          try {
+            const ti = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${token}`).then(r=>r.json());
+            console.log("granted scopes:", ti.scope);
+          } catch {}
+          eventsBox.innerHTML = `<p>이벤트 불러오기 실패 (${res.status}).<br/><code style="white-space:pre-wrap">${(txt||"").replace(/</g,"&lt;")}</code></p>`;
+          return;
+        }
+        const { items = [] } = await res.json();
+        eventsBox.innerHTML = items.length
+          ? `<ul style="margin:0; padding-left:1rem">${items.map(e=>{
+              const start=e.start?.dateTime||e.start?.date||''; const end=e.end?.dateTime||e.end?.date||'';
+              return `<li><strong>${e.summary||'(제목 없음)'}</strong> — ${start}${end?' ~ '+end:''}</li>`;
+            }).join("")}</ul>`
+          : "<p>예정된 이벤트가 없습니다.</p>";
+      } catch (e) {
+        console.error(e);
+        eventsBox.textContent = "네트워크 오류로 이벤트를 불러오지 못했습니다.";
+      }
     }
 
     async function createEvent(token) {
       const start = new Date(Date.now() + 60*60*1000).toISOString();
       const end   = new Date(Date.now() + 2*60*60*1000).toISOString();
-      const res = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          summary: "테스트 이벤트",
-          start: { dateTime: start, timeZone: "Asia/Seoul" },
-          end:   { dateTime: end,   timeZone: "Asia/Seoul" },
-        })
-      });
-      if (!res.ok) { alert("생성 실패"); return; }
-      alert("이벤트 생성 완료!");
-      await loadEvents(token);
+      try {
+        const res = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            summary: "테스트 이벤트",
+            start: { dateTime: start, timeZone: "Asia/Seoul" },
+            end:   { dateTime: end,   timeZone: "Asia/Seoul" },
+          })
+        });
+        if (!res.ok) {
+          const t = await res.text().catch(()=> "");
+          alert("생성 실패:\n" + t);
+          return;
+        }
+        alert("이벤트 생성 완료!");
+        await loadEvents(token);
+      } catch (e) {
+        alert("네트워크 오류로 생성 실패");
+        console.error(e);
+      }
     }
 
     async function main() {
       const token = getAccessToken();
-      if (!token) return; // 비로그인인 경우: 위 임베드만 보임
+
+      // ✅ 로그인 상태라면 공개 임베드 섹션 제거(CSP 경고 방지)
+      if (token) {
+        const pub = document.getElementById('public-embed');
+        pub?.parentNode?.removeChild(pub);
+      }
+
+      if (!token) return; // 비로그인: 공개 임베드만 표시
 
       const me = await fetchMe(token);
       await loadEvents(token);
