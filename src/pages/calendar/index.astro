@@ -2,8 +2,9 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { AUTH, CALENDAR } from '../../site.config';
 ---
-<style global>
-  @import "../../styles/fullcalendar.css";
+<style is:global>
+  @import url("https://cdn.jsdelivr.net/npm/@fullcalendar/common@6.1.19/main.min.css");
+  @import url("https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.19/main.min.css");
 </style>
 <BaseLayout title="달력">
   <h1>달력</h1>
@@ -154,7 +155,7 @@ import { AUTH, CALENDAR } from '../../site.config';
     main();
   </script>
 
-  <style>
+  <style is:global>
     /* 달력의 카드 안쪽 여백과 조화롭게 */
     #calendar :global(.fc) {
       --fc-border-color: var(--border);
@@ -166,4 +167,5 @@ import { AUTH, CALENDAR } from '../../site.config';
       --fc-list-event-hover-bg-color: var(--surface);
     }
   </style>
+
 </BaseLayout>
