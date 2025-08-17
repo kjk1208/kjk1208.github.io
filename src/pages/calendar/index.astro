@@ -41,7 +41,7 @@ import { AUTH, CALENDAR } from "../../site.config";
   <script is:inline src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.19/index.global.min.js"></script>
 
   <!-- ✅ 캘린더 초기화 + Google Calendar에서 이벤트 불러오기 -->
-  <script>
+  <script is:inline>
     // 로그인 토큰
     function getAccessToken() {
       const t = localStorage.getItem("access_token");
@@ -58,8 +58,16 @@ import { AUTH, CALENDAR } from "../../site.config";
       const el = document.getElementById("calendar");
       if (!el || !token) return; // 비로그인: 공개 임베드만 보임
 
-      const calendar = new FullCalendar.Calendar(el, {
-        plugins: [ FullCalendarDayGrid ],
+      // 전역 빌드 안전 폴백: FullCalendarDayGrid 또는 FullCalendar.DayGrid 사용
+      const FC = window.FullCalendar;
+      const DayGrid = window.FullCalendarDayGrid || (FC && FC.DayGrid);
+      if (!FC || !DayGrid) {
+        console.error("FullCalendar globals are not loaded yet.");
+        return;
+      }
+
+      const calendar = new FC.Calendar(el, {
+        plugins: [ DayGrid ],
         initialView: "dayGridMonth",
         locale: "ko",
         firstDay: 0,
@@ -99,8 +107,7 @@ import { AUTH, CALENDAR } from "../../site.config";
 
       calendar.render();
 
-      // (선택) OWNER에게만 "이벤트 만들기" 버튼 노출하고 생성 기능 연결하려면,
-      // BaseLayout의 meta[data-owner]를 읽어와서 아래처럼 추가하세요.
+      // (선택) OWNER에게만 "이벤트 만들기" 버튼 노출하고 생성 기능 연결
       const ownerMeta = document.getElementById('auth-config');
       const OWNER = ownerMeta?.dataset.owner || "";
       const userEmail = localStorage.getItem("user_email") || "";
