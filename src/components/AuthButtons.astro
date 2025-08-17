@@ -1,0 +1,20 @@
+---
+---
+<div style="display:flex; gap:.5rem;">
+  <button class="button only-signed-out" id="btn-login">로그인</button>
+  <button class="button only-signed-in"  id="btn-logout">로그아웃</button>
+</div>
+
+<style>
+  .only-signed-in  { display: none; }
+  .only-signed-out { display: inline-flex; }
+  html[data-auth="signed-in"] .only-signed-in  { display: inline-flex; }
+  html[data-auth="signed-in"] .only-signed-out { display: none; }
+</style>
+
+<script type="module">
+  import { bootAuth, signIn, signOut } from "/src/scripts/auth.js";
+  bootAuth();
+  document.getElementById("btn-login")?.addEventListener("click", signIn);
+  document.getElementById("btn-logout")?.addEventListener("click", signOut);
+</script>

@@ -1,17 +1,115 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { CALENDAR } from '../../site.config';
-const params = new URLSearchParams({
-  src: CALENDAR.id,
-  ctz: CALENDAR.timezone,
-  mode: 'WEEK' // WEEK | MONTH | AGENDA
-}).toString();
-const url = `https://calendar.google.com/calendar/embed?${params}`;
+import { AUTH, CALENDAR } from '../../site.config';
 ---
+
 <BaseLayout title="달력">
   <h1>달력</h1>
-  <p class="small">Google Calendar를 공개(읽기 전용)로 설정한 뒤 <code>src/site.config.ts</code>의 CALENDAR.id를 교체하세요.</p>
-  <div class="card" style="overflow:hidden">
-    <iframe src={url} style="width:100%; height:70vh; border:0" loading="lazy"></iframe>
-  </div>
+
+  <!-- 비로그인 사용자에게 보이는 영역: 공개 캘린더 임베드(읽기 전용) -->
+  <section class="card only-signed-out">
+    <p class="small">달력은 로그인한 사용자에게만 편집 기능이 열립니다.</p>
+    <div style="overflow:hidden">
+      <iframe
+        src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(CALENDAR.id)}&ctz=${encodeURIComponent(CALENDAR.timezone)}&mode=MONTH`}
+        style="width:100%; height:70vh; border:0" loading="lazy">
+      </iframe>
+    </div>
+  </section>
+
+  <!-- 로그인 사용자에게 보이는 영역: API로 읽기/쓰기 -->
+  <section class="card only-signed-in">
+    <div style="display:flex; gap:.5rem; align-items:center; justify-content:space-between; flex-wrap:wrap;">
+      <div>
+        <strong>내 캘린더 (primary)</strong>
+        <div class="small">로그인 계정이 <code>{AUTH.ownerEmail}</code>일 때만 “이벤트 만들기”가 보입니다.</div>
+      </div>
+      <div id="owner-actions" style="display:none; gap:.5rem;">
+        <button class="button" id="btnCreate">이벤트 만들기</button>
+      </div>
+    </div>
+    <hr class="sep" />
+    <div id="events">불러오는 중…</div>
+  </section>
+
+  <script type="module">
+    import { AUTH } from "/src/site.config.ts";
+    import { getAccessToken } from "/src/scripts/auth.js";
+
+    const eventsBox = document.getElementById('events');
+    const ownerActions = document.getElementById('owner-actions');
+
+    async function fetchMe(token) {
+      const r = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!r.ok) return {};
+      return r.json();
+    }
+
+    async function loadEvents(token) {
+      const url = new URL("https://www.googleapis.com/calendar/v3/calendars/primary/events");
+      const now = Date.now();
+      url.searchParams.set("singleEvents", "true");
+      url.searchParams.set("orderBy", "startTime");
+      url.searchParams.set("timeMin", new Date(now - 7*86400*1000).toISOString());
+      url.searchParams.set("timeMax", new Date(now + 30*86400*1000).toISOString());
+
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) {
+        eventsBox.innerHTML = "<p>이벤트를 불러오지 못했습니다.</p>";
+        return;
+      }
+      const { items = [] } = await res.json();
+      eventsBox.innerHTML = items.length
+        ? `<ul style="margin:0; padding-left:1rem">
+            ${items.map(e => {
+              const start = e.start?.dateTime || e.start?.date || '';
+              const end   = e.end?.dateTime   || e.end?.date   || '';
+              return `<li><strong>${e.summary || '(제목 없음)'}</strong> — ${start}${end ? ' ~ ' + end : ''}</li>`;
+            }).join('')}
+           </ul>`
+        : "<p>예정된 이벤트가 없습니다.</p>";
+    }
+
+    async function createEvent(token) {
+      const start = new Date(Date.now() + 60*60*1000).toISOString();
+      const end   = new Date(Date.now() + 2*60*60*1000).toISOString();
+      const body = {
+        summary: "테스트 이벤트",
+        start: { dateTime: start, timeZone: "Asia/Seoul" },
+        end:   { dateTime: end,   timeZone: "Asia/Seoul" }
+      };
+      const r = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
+      if (!r.ok) {
+        const t = await r.text();
+        alert("생성 실패: " + t);
+        return;
+      }
+      alert("이벤트 생성 완료!");
+      loadEvents(token);
+    }
+
+    async function main() {
+      const token = getAccessToken();
+      if (!token) return; // 비로그인: 위의 only-signed-out 블록만 보임
+
+      const me = await fetchMe(token);
+      await loadEvents(token);
+
+      // 관리자 계정일 때만 편집 버튼 표시
+      if (me?.email === AUTH.ownerEmail) {
+        ownerActions.style.display = "flex";
+        document.getElementById('btnCreate')?.addEventListener('click', () => createEvent(token));
+      }
+    }
+    main();
+  </script>
 </BaseLayout>

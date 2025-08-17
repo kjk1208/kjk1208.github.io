@@ -17,25 +17,46 @@ const { title = SITE.title, description = SITE.description } = Astro.props;
     <header class="nav">
       <div class="nav-inner">
         <a class="nav-brand" href="/">{SITE.title}</a>
+
         <nav class="nav-links" aria-label="Primary">
           <a href="/reviews/">논문 리뷰</a>
           <a href="/dev/">개발</a>
           <a href="/board/">게시판</a>
-          <a href="/calendar/">달력</a>
+          <!-- ✅ 로그인한 사용자에게만 보이도록 -->
+          <a href="/calendar/" class="only-signed-in">달력</a>
           <a href="/pomodoro/">뽀모도로</a>
           <a href="/about/">About</a>
           <a href="/search/" aria-label="Search">검색</a>
         </nav>
+
         <div class="nav-spacer"></div>
+
+        <!-- ✅ 로그인/로그아웃 버튼 -->
+        <button class="button only-signed-out" id="btn-login"  type="button">로그인</button>
+        <button class="button only-signed-in"  id="btn-logout" type="button">로그아웃</button>
+
+        <!-- 테마 토글 -->
         <button class="button" id="themeToggle" title="Toggle theme">자동</button>
       </div>
     </header>
+
     <main class="container">
       <slot />
     </main>
+
     <footer class="site container small">
       © {new Date().getFullYear()} {SITE.author}. • Built with Astro
     </footer>
+
+    <!-- ✅ 로그인 상태에 따라 보이기/숨기기 -->
+    <style>
+      .only-signed-in  { display: none; }
+      .only-signed-out { display: inline-flex; }
+      html[data-auth="signed-in"] .only-signed-in  { display: inline-flex; }
+      html[data-auth="signed-in"] .only-signed-out { display: none; }
+    </style>
+
+    <!-- 테마 토글 스크립트(그대로) -->
     <script>
       const btn  = document.getElementById('themeToggle');
       const root = document.documentElement;
@@ -45,21 +66,14 @@ const { title = SITE.title, description = SITE.description } = Astro.props;
                     : mode === 'dark'  ? '다크'
                     : '자동';
       };
-
       const apply = (mode) => {
-        // auto면 data-theme 속성을 제거 → 시스템 테마 사용
         if (mode === 'auto') root.removeAttribute('data-theme');
         else root.setAttribute('data-theme', mode);
-
         localStorage.setItem('theme', mode);
         setLabel(mode);
       };
-
-      // 초기 적용: 저장된 값이 없으면 'auto'
       const saved = localStorage.getItem('theme') || 'auto';
       apply(saved);
-
-      // 클릭 시 라이트 → 다크 → 자동 → 라이트 순환
       btn?.addEventListener('click', () => {
         const cur  = localStorage.getItem('theme') || 'auto';
         const next = cur === 'light' ? 'dark'
@@ -67,6 +81,14 @@ const { title = SITE.title, description = SITE.description } = Astro.props;
                   : 'light';
         apply(next);
       });
+    </script>
+
+    <!-- ✅ Auth 초기화 + 버튼 연결 (GIS 사용) -->
+    <script type="module">
+      import { bootAuth, signIn, signOut } from "/src/scripts/auth.js";
+      bootAuth();
+      document.getElementById('btn-login')?.addEventListener('click', signIn);
+      document.getElementById('btn-logout')?.addEventListener('click', signOut);
     </script>
   </body>
 </html>
