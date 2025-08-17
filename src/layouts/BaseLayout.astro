@@ -77,6 +77,7 @@ const { title = SITE.title, description = SITE.description } = Astro.props;
     <!-- ✅ Auth: 인라인 구현 (외부 모듈 import 제거) -->
     <script>
       // 상태 헬퍼
+      console.log("CLIENT_ID:", document.getElementById('auth-config')?.dataset.clientId);
       function setAuthState(signedIn, email="") {
         document.documentElement.dataset.auth = signedIn ? "signed-in" : "signed-out";
         if (signedIn) {
