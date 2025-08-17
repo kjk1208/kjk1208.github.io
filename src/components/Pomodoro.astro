@@ -1,5 +1,5 @@
 ---
-const DEFAULTS = { focus: 25, short: 5, long: 15, interval: 4 };
+const DEFAULTS = { focus: 50, short: 10, long: 15, interval: 4 };
 ---
 <section class="card" aria-label="Pomodoro Timer">
   <div style="display:flex; gap:1rem; align-items:center; justify-content:space-between; flex-wrap:wrap;">
@@ -15,7 +15,7 @@ const DEFAULTS = { focus: 25, short: 5, long: 15, interval: 4 };
     </div>
     <div>
       <div id="phase" class="badge" style="text-align:right">대기</div>
-      <div id="time" style="font-size:3rem; font-weight:700; letter-spacing:1px;">25:00</div>
+      <div id="time" style="font-size:3rem; font-weight:700; letter-spacing:1px;">50:00</div>
       <div style="display:flex; gap:.5rem; margin-top:.4rem;">
         <button id="start" class="button">시작</button>
         <button id="pause" class="button">일시정지</button>
