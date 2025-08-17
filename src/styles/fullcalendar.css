@@ -1,0 +1,12 @@
+/* FullCalendar 기본 스타일 */
+@import "@fullcalendar/core/index.css";
+@import "@fullcalendar/daygrid/index.css";
+
+/* 커스터마이징 예시 */
+.fc {
+  font-family: system-ui, sans-serif;
+}
+.fc-toolbar-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
