@@ -15,7 +15,7 @@ const { title = SITE.title, description = SITE.description } = Astro.props;
 
     <!-- ✅ Google Identity Services 로더 + 런타임 설정 -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <meta id="auth-config" data-client-id="{AUTH.googleClientId}" data-owner="{AUTH.ownerEmail}">
+    <meta id="auth-config" data-client-id={AUTH.googleClientId} data-owner={AUTH.ownerEmail}>
   </head>
   <body>
     <header class="nav">
