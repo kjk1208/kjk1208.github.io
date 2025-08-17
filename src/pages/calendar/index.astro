@@ -1,7 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { AUTH, CALENDAR } from "../../site.config";
-import { initCalendar } from "../../scripts/calendar-page.js";
 ---
 
 <style is:global>
@@ -36,13 +35,16 @@ import { initCalendar } from "../../scripts/calendar-page.js";
     <div id="calendar" style="min-height: 650px;"></div>
   </section>
 
-  <!-- 클라이언트 실행 -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const el = document.getElementById("calendar");
-      if (el) {
-        initCalendar(el);
-      }
-    });
-  </script>
+  <!-- 클라이언트 실행: 번들된 모듈을 브라우저에서 import -->
+  <script type="module">
+    import { initCalendar } from '/src/scripts/calendar-page.js';
+    const run = () => {
+      const el = document.getElementById('calendar');
+      if (el) initCalendar(el);
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', run);
+    } else {
+      run();
+    }
 </BaseLayout>
