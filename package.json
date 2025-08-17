@@ -15,7 +15,6 @@
     "@fullcalendar/daygrid": "^6.1.19",
     "astro": "^4.10.0",
     "astro-expressive-code": "^0.35.3",
-    "fullcalendar": "^6.1.19",
     "katex": "^0.16.11",
     "mermaid": "^10.9.1",
     "rehype-katex": "^7.0.0",
