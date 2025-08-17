@@ -1,10 +1,7 @@
 // src/scripts/calendar-page.js
-import { Calendar } from '@fullcalendar/core';
-import dayGridPlugin from '@fullcalendar/daygrid';
-
 export function initCalendar(el) {
-  const calendar = new Calendar(el, {
-    plugins: [dayGridPlugin],
+  const calendar = new FullCalendar.Calendar(el, {
+    plugins: [ FullCalendarDayGrid ],
     initialView: 'dayGridMonth',
     locale: 'ko',
     firstDay: 0,
