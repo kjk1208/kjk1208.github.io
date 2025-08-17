@@ -39,33 +39,36 @@ import { AUTH, CALENDAR } from "../../site.config";
   <!-- ✅ FullCalendar JS (CDN, 글로벌 객체) -->
   <script is:inline src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.19/index.global.min.js"></script>
   <script is:inline src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.19/index.global.min.js"></script>
+  <script is:inline src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.19/index.global.min.js"></script>
 
   <!-- ✅ 캘린더 초기화 + Google Calendar에서 이벤트 불러오기 -->
   <script is:inline>
-    // 로그인 토큰
+  (() => {
     function getAccessToken() {
       const t = localStorage.getItem("access_token");
       const exp = Number(localStorage.getItem("token_exp") || 0);
       return (t && exp > Date.now()) ? t : null;
     }
+    const toISO = (dt) => (dt instanceof Date) ? dt.toISOString() : new Date(dt).toISOString();
 
     document.addEventListener("DOMContentLoaded", () => {
       const token = getAccessToken();
-
-      // 로그인 상태면 공개 임베드 제거
-      if (token) document.getElementById('public-embed')?.remove();
+      if (token) document.getElementById("public-embed")?.remove();
 
       const el = document.getElementById("calendar");
-      if (!el || !token) return; // 비로그인: 공개 임베드만 보임
+      if (!el || !token) return;
 
-      // 글로벌 빌드 로딩 확인
       const FC = window.FullCalendar;
-      if (!FC) {
-        console.error("FullCalendar core(global)가 아직 로드되지 않았습니다.");
-        return;
-      }
+      if (!FC) { console.error("[cal] FullCalendar global not loaded"); return; }
 
-      // ⚠️ plugins 옵션은 아예 넣지 않습니다 (글로벌 빌드 자동 등록에 맡김)
+      // OWNER 확인
+      const ownerMeta = document.getElementById("auth-config");
+      const OWNER = ownerMeta?.dataset.owner || "";
+      const userEmail = localStorage.getItem("user_email") || "";
+      const isOwner = (userEmail && OWNER && userEmail === OWNER);
+      console.log("[cal] isOwner:", isOwner);
+
+      // 캘린더 옵션 (plugins는 CDN 자동등록 사용)
       const options = {
         initialView: "dayGridMonth",
         locale: "ko",
@@ -73,7 +76,13 @@ import { AUTH, CALENDAR } from "../../site.config";
         height: "auto",
         headerToolbar: { left: "prev,next today", center: "title", right: "" },
 
-        // FullCalendar가 화면에 보여주는 범위로 Google Calendar에서 이벤트 로드
+        // 상호작용
+        selectable: isOwner,     // 드래그 범위 선택 → select 콜백
+        selectMirror: true,
+        editable: isOwner,       // 이벤트 드래그/리사이즈
+        dayMaxEventRows: true,
+
+        // 구글 캘린더에서 현재 뷰 범위만 로드
         events: async (info, success, failure) => {
           try {
             const url = new URL("https://www.googleapis.com/calendar/v3/calendars/primary/events");
@@ -81,70 +90,105 @@ import { AUTH, CALENDAR } from "../../site.config";
             url.searchParams.set("orderBy", "startTime");
             url.searchParams.set("timeMin", new Date(info.start).toISOString());
             url.searchParams.set("timeMax", new Date(info.end).toISOString());
-
             const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-            if (!res.ok) {
-              const txt = await res.text().catch(()=> "");
-              console.error("Calendar API error:", res.status, txt);
-              failure(new Error(txt || "Calendar API error"));
-              return;
-            }
+            if (!res.ok) { failure(new Error(await res.text().catch(()=> ""))); return; }
             const { items = [] } = await res.json();
-            const evts = items.map(e => ({
+            success(items.map(e => ({
               id: e.id,
               title: e.summary || "(제목 없음)",
               start: e.start?.dateTime || e.start?.date,
               end:   e.end?.dateTime   || e.end?.date,
               allDay: !!e.start?.date
-            }));
-            success(evts);
-          } catch (err) {
-            failure(err);
-          }
+            })));
+          } catch (err) { failure(err); }
+        },
+        
+        // 드래그 "범위" 선택으로 생성
+        select: async (selInfo) => {
+          if (!isOwner) return;
+          const title = window.prompt("이벤트 제목을 입력하세요:");
+          if (!title) { selInfo.view.calendar.unselect(); return; }
+          const allDay = selInfo.allDay;
+          const startISO = allDay ? selInfo.startStr : toISO(selInfo.start);
+          const endISO   = allDay ? selInfo.endStr   : toISO(selInfo.end);
+          try {
+            const res = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                summary: title,
+                start: allDay ? { date: startISO.slice(0,10) } : { dateTime: startISO, timeZone: "Asia/Seoul" },
+                end:   allDay ? { date: endISO.slice(0,10) }   : { dateTime: endISO,   timeZone: "Asia/Seoul" }
+              })
+            });
+            if (!res.ok) throw new Error(await res.text().catch(()=> "create failed"));
+            selInfo.view.calendar.refetchEvents();
+          } catch (e) { console.error(e); alert("이벤트 생성 실패"); }
+          finally { selInfo.view.calendar.unselect(); }
+        },
+
+        // 클릭 → 삭제
+        eventClick: async (info) => {
+          if (!isOwner) return;
+          if (!window.confirm(`삭제할까요?\n\n${info.event.title}`)) return;
+          try {
+            await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(info.event.id)}`, {
+              method: "DELETE", headers: { Authorization: `Bearer ${token}` }
+            });
+            info.event.remove();
+          } catch (e) { console.error(e); alert("삭제 실패"); }
+        },
+
+        // 드래그 이동
+        eventDrop: async (info) => {
+          if (!isOwner) { info.revert(); return; }
+          const ev = info.event;
+          const allDay = ev.allDay;
+          const startISO = allDay ? ev.startStr : toISO(ev.start);
+          const endISO   = allDay ? ev.endStr   : toISO(ev.end || ev.start);
+          try {
+            const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(ev.id)}`, {
+              method: "PATCH",
+              headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                start: allDay ? { date: startISO.slice(0,10) } : { dateTime: startISO, timeZone: "Asia/Seoul" },
+                end:   allDay ? { date: endISO.slice(0,10) }   : { dateTime: endISO,   timeZone: "Asia/Seoul" }
+              })
+            });
+            if (!res.ok) throw new Error(await res.text().catch(()=> "update failed"));
+          } catch (e) { console.error(e); alert("이동 실패"); info.revert(); }
+        },
+
+        // 리사이즈
+        eventResize: async (info) => {
+          if (!isOwner) { info.revert(); return; }
+          const ev = info.event;
+          const allDay = ev.allDay;
+          const startISO = allDay ? ev.startStr : toISO(ev.start);
+          const endISO   = allDay ? ev.endStr   : toISO(ev.end || ev.start);
+          try {
+            const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(ev.id)}`, {
+              method: "PATCH",
+              headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                start: allDay ? { date: startISO.slice(0,10) } : { dateTime: startISO, timeZone: "Asia/Seoul" },
+                end:   allDay ? { date: endISO.slice(0,10) }   : { dateTime: endISO,   timeZone: "Asia/Seoul" }
+              })
+            });
+            if (!res.ok) throw new Error(await res.text().catch(()=> "update failed"));
+          } catch (e) { console.error(e); alert("시간 변경 실패"); info.revert(); }
         }
       };
 
       const calendar = new FC.Calendar(el, options);
       calendar.render();
-
-      // (선택) OWNER에게만 "이벤트 만들기" 버튼 노출하고 생성 기능 연결
-      const ownerMeta = document.getElementById('auth-config');
-      const OWNER = ownerMeta?.dataset.owner || "";
-      const userEmail = localStorage.getItem("user_email") || "";
-
-      if (userEmail && OWNER && userEmail === OWNER) {
-        const ownerActions = document.getElementById('owner-actions');
-        if (ownerActions) {
-          ownerActions.style.display = "flex";
-          document.getElementById('btnCreate')?.addEventListener('click', async () => {
-            const start = new Date(Date.now() + 60*60*1000).toISOString();
-            const end   = new Date(Date.now() + 2*60*60*1000).toISOString();
-            const res = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                summary: "테스트 이벤트",
-                start: { dateTime: start, timeZone: "Asia/Seoul" },
-                end:   { dateTime: end,   timeZone: "Asia/Seoul" }
-              })
-            });
-            if (!res.ok) {
-              const t = await res.text().catch(()=> "");
-              alert("생성 실패:\n" + t);
-              return;
-            }
-            alert("이벤트 생성 완료!");
-            calendar.refetchEvents();
-          });
-        }
-      }
     });
+  })();
   </script>
 
+
   <style is:global>
+    #calendar { position: relative; z-index: 1; }
     #calendar :global(.fc) {
       --fc-border-color: var(--border);
       --fc-button-bg-color: var(--surface);
