@@ -9,10 +9,11 @@ export const SITE = {
 // giscus configuration (fill after creating giscus discussion category)
 export const GISCUS = {
   repo: "kjk1208/kjk1208.github.io",   // e.g. "owner/repo"
-  repoId: "R_kgDOPe6wFA",                          // from giscus.app
+  repoId: "R_kgDOPe6wFA",              // from giscus.app
   category: "General",                 // or the category you create
-  categoryId: "DIC_kwDOPe6wFM4CuPn-",                      // from giscus.app
-  mapping: "pathname"                  // "pathname" is convenient for SSG
+  categoryId: "DIC_kwDOPe6wFM4CuPn-",  // from giscus.app
+  mapping: "pathname",                 // "pathname" is convenient for SSG
+  theme: "preferred_color_scheme",     // 
 };
 
 // Google Calendar (public) embed configuration

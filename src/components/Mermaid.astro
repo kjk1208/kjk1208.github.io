@@ -1,8 +1,17 @@
 ---
-const { code = "" } = Astro.props;
+/**
+ * Mermaid.astro
+ * props:
+ *  - code:   string  (필수) mermaid 소스
+ *  - theme:  string  (선택) 'default' | 'dark' | 'neutral' 등. 기본값 'neutral'
+ */
+const { code = "", theme = "neutral" } = Astro.props;
 ---
 <div class="mermaid">{code}</div>
-<script client:load>
-  import mermaid from 'mermaid';
-  mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+
+<!-- 브라우저 모듈 스크립트로 ESM 직접 import -->
+<script is:inline type="module" define:vars={{ theme }}>
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+  // 페이지 로드 시 .mermaid 요소들을 자동 렌더
+  mermaid.initialize({ startOnLoad: true, theme });
 </script>

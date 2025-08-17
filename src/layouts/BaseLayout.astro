@@ -76,8 +76,7 @@ const { title = SITE.title, description = SITE.description } = Astro.props;
 
     <!-- ✅ Auth: 인라인 구현 (외부 모듈 import 제거) -->
     <script>
-      // 상태 헬퍼
-      console.log("CLIENT_ID:", document.getElementById('auth-config')?.dataset.clientId);
+      // 상태 헬퍼      
       function setAuthState(signedIn, email="") {
         document.documentElement.dataset.auth = signedIn ? "signed-in" : "signed-out";
         if (signedIn) {
@@ -146,6 +145,18 @@ const { title = SITE.title, description = SITE.description } = Astro.props;
 
       document.getElementById('btn-login') ?.addEventListener('click', signIn);
       document.getElementById('btn-logout')?.addEventListener('click', signOut);
+    </script>
+    <script is:inline>
+      document.addEventListener('DOMContentLoaded', () => {
+        const owner = document.getElementById('auth-config')?.dataset.owner || '';
+        const email = localStorage.getItem('user_email') || '';
+        const isOwner = email && owner && email === owner;
+
+        // 주인장에게만 보일 요소
+        document.querySelectorAll('.only-owner').forEach(el => {
+          el.style.display = isOwner ? '' : 'none';
+        });
+      });
     </script>
   </body>
 </html>

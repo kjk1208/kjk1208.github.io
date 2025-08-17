@@ -28,10 +28,7 @@ import { AUTH, CALENDAR } from "../../site.config";
     <div>
       <strong>내 캘린더 (primary)</strong>
       <div class="small">주인장 계정으로 로그인해야만 캘린더가 보입니다.</div>
-    </div>
-    <div id="owner-actions" style="display:none; gap:.5rem;">
-      <button class="button" id="btnCreate">이벤트 만들기</button>
-    </div>
+    </div>    
     <hr class="sep" />
     <div id="calendar" style="min-height: 650px;"></div>
   </section>
@@ -65,8 +62,7 @@ import { AUTH, CALENDAR } from "../../site.config";
       const ownerMeta = document.getElementById("auth-config");
       const OWNER = ownerMeta?.dataset.owner || "";
       const userEmail = localStorage.getItem("user_email") || "";
-      const isOwner = (userEmail && OWNER && userEmail === OWNER);
-      console.log("[cal] isOwner:", isOwner);
+      const isOwner = (userEmail && OWNER && userEmail === OWNER);      
 
       // 캘린더 옵션 (plugins는 CDN 자동등록 사용)
       const options = {
