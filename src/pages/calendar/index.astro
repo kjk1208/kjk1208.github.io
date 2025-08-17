@@ -3,8 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { AUTH, CALENDAR } from '../../site.config';
 
 // ✅ FullCalendar 스타일 불러오기 (Astro 프론트매터에서 import)
-import '@fullcalendar/core/index.css';
-import '@fullcalendar/daygrid/index.css';
+import '@fullcalendar/daygrid/index.css';   // ✅ 이 줄만 유지
 ---
 <BaseLayout title="달력">
   <h1>달력</h1>
