@@ -27,7 +27,7 @@ import { AUTH, CALENDAR } from "../../site.config";
   <section class="card only-signed-in">
     <div>
       <strong>내 캘린더 (primary)</strong>
-      <div class="small">로그인 계정이 <code>{AUTH.ownerEmail}</code>일 때만 버튼이 보입니다.</div>
+      <div class="small">주인장 계정으로 로그인해야만 캘린더가 보입니다.</div>
     </div>
     <div id="owner-actions" style="display:none; gap:.5rem;">
       <button class="button" id="btnCreate">이벤트 만들기</button>
@@ -37,8 +37,8 @@ import { AUTH, CALENDAR } from "../../site.config";
   </section>
 
   <!-- ✅ FullCalendar JS (CDN, 글로벌 객체) -->
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.19/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.19/index.global.min.js"></script>
+  <script is:inline src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.19/index.global.min.js"></script>
+  <script is:inline src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.19/index.global.min.js"></script>
 
   <!-- ✅ 캘린더 초기화 + Google Calendar에서 이벤트 불러오기 -->
   <script>
