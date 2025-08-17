@@ -1,7 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { AUTH, CALENDAR } from "../../site.config";
-import calendarScript from "../../scripts/calendar-page.js?url";  // ✅ 추가
 ---
 
 <style is:global>
@@ -37,8 +36,106 @@ import calendarScript from "../../scripts/calendar-page.js?url";  // ✅ 추가
     <div id="calendar" style="min-height: 650px;"></div>
   </section>
 
-  <!-- ✅ 번들된 모듈을 파일로 로드 (인라인 import 금지) -->
-  <script type="module" src={calendarScript}></script>
+  <!-- ✅ FullCalendar JS (CDN, 글로벌 객체) -->
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.19/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.19/index.global.min.js"></script>
+
+  <!-- ✅ 캘린더 초기화 + Google Calendar에서 이벤트 불러오기 -->
+  <script>
+    // 로그인 토큰
+    function getAccessToken() {
+      const t = localStorage.getItem("access_token");
+      const exp = Number(localStorage.getItem("token_exp") || 0);
+      return (t && exp > Date.now()) ? t : null;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const token = getAccessToken();
+
+      // 로그인 상태면 공개 임베드 제거
+      if (token) document.getElementById('public-embed')?.remove();
+
+      const el = document.getElementById("calendar");
+      if (!el || !token) return; // 비로그인: 공개 임베드만 보임
+
+      const calendar = new FullCalendar.Calendar(el, {
+        plugins: [ FullCalendarDayGrid ],
+        initialView: "dayGridMonth",
+        locale: "ko",
+        firstDay: 0,
+        height: "auto",
+        headerToolbar: { left: "prev,next today", center: "title", right: "" },
+
+        // FullCalendar가 화면에 보여주는 범위로 Google Calendar에서 이벤트 로드
+        events: async (info, success, failure) => {
+          try {
+            const url = new URL("https://www.googleapis.com/calendar/v3/calendars/primary/events");
+            url.searchParams.set("singleEvents", "true");
+            url.searchParams.set("orderBy", "startTime");
+            url.searchParams.set("timeMin", new Date(info.start).toISOString());
+            url.searchParams.set("timeMax", new Date(info.end).toISOString());
+
+            const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+            if (!res.ok) {
+              const txt = await res.text().catch(()=> "");
+              console.error("Calendar API error:", res.status, txt);
+              failure(new Error(txt || "Calendar API error"));
+              return;
+            }
+            const { items = [] } = await res.json();
+            const evts = items.map(e => ({
+              id: e.id,
+              title: e.summary || "(제목 없음)",
+              start: e.start?.dateTime || e.start?.date,
+              end:   e.end?.dateTime   || e.end?.date,
+              allDay: !!e.start?.date
+            }));
+            success(evts);
+          } catch (err) {
+            failure(err);
+          }
+        }
+      });
+
+      calendar.render();
+
+      // (선택) OWNER에게만 "이벤트 만들기" 버튼 노출하고 생성 기능 연결하려면,
+      // BaseLayout의 meta[data-owner]를 읽어와서 아래처럼 추가하세요.
+      const ownerMeta = document.getElementById('auth-config');
+      const OWNER = ownerMeta?.dataset.owner || "";
+      const userEmail = localStorage.getItem("user_email") || "";
+
+      if (userEmail && OWNER && userEmail === OWNER) {
+        const ownerActions = document.getElementById('owner-actions');
+        if (ownerActions) {
+          ownerActions.style.display = "flex";
+          document.getElementById('btnCreate')?.addEventListener('click', async () => {
+            const start = new Date(Date.now() + 60*60*1000).toISOString();
+            const end   = new Date(Date.now() + 2*60*60*1000).toISOString();
+            const res = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                summary: "테스트 이벤트",
+                start: { dateTime: start, timeZone: "Asia/Seoul" },
+                end:   { dateTime: end,   timeZone: "Asia/Seoul" }
+              })
+            });
+            if (!res.ok) {
+              const t = await res.text().catch(()=> "");
+              alert("생성 실패:\n" + t);
+              return;
+            }
+            alert("이벤트 생성 완료!");
+            calendar.refetchEvents();
+          });
+        }
+      }
+    });
+  </script>
 
   <style is:global>
     #calendar :global(.fc) {
