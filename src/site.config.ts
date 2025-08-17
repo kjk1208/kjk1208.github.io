@@ -22,6 +22,6 @@ export const CALENDAR = {
 };
 
 export const AUTH = {
-  googleClientId: "444538470487-99crrudv2hgfs9il1s1hl27s7r6o1lou.apps.googleusercontent.com",
+  googleClientId: "444538470487-pooe0101932a84akkl35mgdrcd484hla.apps.googleusercontent.com",
   ownerEmail: "rlawnsrhkd@gmail.com", // 편집 권한 줄 계정
 };
