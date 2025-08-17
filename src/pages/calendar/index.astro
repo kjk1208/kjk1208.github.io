@@ -6,6 +6,7 @@ import { AUTH, CALENDAR } from '../../site.config';
   @import url("https://cdn.jsdelivr.net/npm/@fullcalendar/common@6.1.19/main.min.css");
   @import url("https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.19/main.min.css");
 </style>
+
 <BaseLayout title="달력">
   <h1>달력</h1>
 
@@ -35,128 +36,10 @@ import { AUTH, CALENDAR } from '../../site.config';
     <div id="calendar" style="min-height: 650px;"></div>
   </section>
 
-  <!-- FullCalendar로 렌더링 -->
-  <script type="module">
-    import { Calendar } from '@fullcalendar/core';
-    import dayGridPlugin from '@fullcalendar/daygrid';
-
-    // BaseLayout의 <meta id="auth-config" ...>에서 값 읽기
-    const OWNER = document.getElementById('auth-config')?.dataset.owner || "";
-
-    function getAccessToken() {
-      const t = localStorage.getItem("access_token");
-      const exp = Number(localStorage.getItem("token_exp") || 0);
-      return (t && exp > Date.now()) ? t : null;
-    }
-
-    async function fetchMe(token) {
-      try {
-        const r = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (!r.ok) return {};
-        return r.json();
-      } catch { return {}; }
-    }
-
-    async function createEvent(token) {
-      const start = new Date(Date.now() + 60*60*1000).toISOString();
-      const end   = new Date(Date.now() + 2*60*60*1000).toISOString();
-      const res = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          summary: "테스트 이벤트",
-          start: { dateTime: start, timeZone: "Asia/Seoul" },
-          end:   { dateTime: end,   timeZone: "Asia/Seoul" },
-        })
-      });
-      if (!res.ok) {
-        const t = await res.text().catch(()=> "");
-        alert("생성 실패:\n" + t);
-        return false;
-      }
-      return true;
-    }
-
-    async function main() {
-      const token = getAccessToken();
-
-      // 로그인 상태라면 공개 임베드 섹션 제거(CSP 경고 방지)
-      if (token) {
-        document.getElementById('public-embed')?.remove();
-      }
-      if (!token) return; // 비로그인: 임베드만
-
-      const me = await fetchMe(token);
-
-      // FullCalendar 인스턴스 생성
-      const el = document.getElementById('calendar');
-      let calendar;
-
-      calendar = new Calendar(el, {
-        plugins: [dayGridPlugin],
-        initialView: 'dayGridMonth',
-        locale: 'ko',
-        firstDay: 0,               // 0=일요일, 1=월요일
-        height: 'auto',
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: ''                // 필요 시 다른 뷰 추가
-        },
-        // ✅ FullCalendar가 보여주는 범위(info.startStr ~ info.endStr)에 맞춰 Google Calendar에서 이벤트 로드
-        events: async (info, success, failure) => {
-          try {
-            const url = new URL("https://www.googleapis.com/calendar/v3/calendars/primary/events");
-            url.searchParams.set("singleEvents", "true");
-            url.searchParams.set("orderBy", "startTime");
-            url.searchParams.set("timeMin", new Date(info.start).toISOString());
-            url.searchParams.set("timeMax", new Date(info.end).toISOString());
-
-            const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-            if (!res.ok) {
-              const txt = await res.text().catch(()=> "");
-              console.error("Calendar API error:", res.status, txt);
-              failure(new Error(txt || "Calendar API error"));
-              return;
-            }
-            const { items = [] } = await res.json();
-            const evts = items.map(e => ({
-              id: e.id,
-              title: e.summary || "(제목 없음)",
-              start: e.start?.dateTime || e.start?.date,
-              end:   e.end?.dateTime   || e.end?.date,
-              allDay: !!e.start?.date
-            }));
-            success(evts);
-          } catch (err) {
-            failure(err);
-          }
-        }
-      });
-
-      calendar.render();
-
-      // 관리자(OWNER)만 쓰기 버튼 노출
-      if (me?.email === OWNER) {
-        const ownerActions = document.getElementById('owner-actions');
-        ownerActions.style.display = "flex";
-        document.getElementById('btnCreate')?.addEventListener('click', async () => {
-          const ok = await createEvent(token);
-          if (ok) {
-            alert("이벤트 생성 완료!");
-            calendar.refetchEvents(); // ✅ 새로고침
-          }
-        });
-      }
-    }
-
-    main();
-  </script>
+  <!-- ✅ 번들된 외부 모듈로 로드 -->
+  <script type="module" src={Astro.resolve('../../scripts/calendar-page.js')}></script>
 
   <style is:global>
-    /* 달력의 카드 안쪽 여백과 조화롭게 */
     #calendar :global(.fc) {
       --fc-border-color: var(--border);
       --fc-button-bg-color: var(--surface);
@@ -167,5 +50,4 @@ import { AUTH, CALENDAR } from '../../site.config';
       --fc-list-event-hover-bg-color: var(--surface);
     }
   </style>
-
 </BaseLayout>
