@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { AUTH, CALENDAR } from '../../site.config';
+import calendarScript from '../../scripts/calendar-page.js?url';
 ---
 <style is:global>
   @import url("https://cdn.jsdelivr.net/npm/@fullcalendar/common@6.1.19/main.min.css");
@@ -37,7 +38,7 @@ import { AUTH, CALENDAR } from '../../site.config';
   </section>
 
   <!-- ✅ 번들된 외부 모듈로 로드 -->
-  <script type="module" src={Astro.resolve('../../scripts/calendar-page.js')}></script>
+  <script type="module" src={calendarScript}></script>
 
   <style is:global>
     #calendar :global(.fc) {
