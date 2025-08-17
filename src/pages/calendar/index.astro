@@ -58,16 +58,18 @@ import { AUTH, CALENDAR } from "../../site.config";
       const el = document.getElementById("calendar");
       if (!el || !token) return; // 비로그인: 공개 임베드만 보임
 
-      // 전역 빌드 안전 폴백: FullCalendarDayGrid 또는 FullCalendar.DayGrid 사용
+      // 전역 확인 (global build)
       const FC = window.FullCalendar;
-      const DayGrid = window.FullCalendarDayGrid || (FC && FC.DayGrid);
-      if (!FC || !DayGrid) {
-        console.error("FullCalendar globals are not loaded yet.");
+      // daygrid 전역은 환경에 따라 FullCalendar.DayGrid 만 존재할 수 있음
+      const DayGrid = FC?.DayGrid || window.FullCalendarDayGrid || null;
+
+      if (!FC) {
+        console.error("FullCalendar core(global)가 아직 로드되지 않았습니다.");
         return;
       }
 
-      const calendar = new FC.Calendar(el, {
-        plugins: [ DayGrid ],
+      // 기본 옵션
+      const options = {
         initialView: "dayGridMonth",
         locale: "ko",
         firstDay: 0,
@@ -103,8 +105,16 @@ import { AUTH, CALENDAR } from "../../site.config";
             failure(err);
           }
         }
-      });
+      };
 
+      // ✅ 플러그인 전역이 확인될 때만 plugins 옵션을 추가 (없으면 자동등록에 맡김)
+      if (DayGrid) {
+        options.plugins = [ DayGrid ];
+      } else {
+        console.warn("DayGrid 플러그인 전역을 찾지 못했습니다. (스크립트 포함시 자동등록을 기대합니다)");
+      }
+
+      const calendar = new FC.Calendar(el, options);
       calendar.render();
 
       // (선택) OWNER에게만 "이벤트 만들기" 버튼 노출하고 생성 기능 연결
