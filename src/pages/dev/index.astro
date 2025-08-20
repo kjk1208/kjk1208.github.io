@@ -1,18 +1,81 @@
 ---
 import DocsLayout from '../../layouts/DocsLayout.astro';
 import { getCollection } from 'astro:content';
-const posts = (await getCollection('dev', p => !p.data.draft)).sort((a,b) => (a.data.date < b.data.date ? 1 : -1));
+
+const posts = (await getCollection('dev', (p) => !p.data.draft))
+  .sort((a, b) => (a.data.date < b.data.date ? 1 : -1));
+
 const sidebarLinks = [{ href: '/dev/', label: '전체' }];
 ---
+
 <DocsLayout sidebarTitle="개발" {sidebarLinks}>
-  <h1>개발 노트</h1>
+  <!-- 제목 + 버튼 -->
+  <section class="page-head">
+    <h1>개발 노트</h1>
+    <!-- 오너 로그인 시에만 노출 (BaseLayout의 .only-owner 규칙 활용) -->
+    <a id="write-dev" class="button only-owner" target="_blank" rel="noopener">개발 글쓰기</a>
+  </section>
+
   <div class="post-list">
     {posts.map((p) => (
       <article class="post-item">
         <h3><a href={`/dev/${p.slug}/`}>{p.data.title}</a></h3>
-        <div class="small">{p.data.date}{p.data.tags.length ? ` • ${p.data.tags.join(', ')}` : ''}</div>
+        <div class="small">
+          {p.data.date}
+          {p.data.tags.length ? ` • ${p.data.tags.join(', ')}` : ''}
+        </div>
         {p.data.summary && <p style="margin:.4rem 0 0 0;">{p.data.summary}</p>}
       </article>
     ))}
   </div>
+
+  <style>
+    .page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 0 0 1rem;
+    }
+  </style>
+
+  <!-- GitHub 새 파일 링크 빌드(ES5/안전) -->
+  <script is:raw>
+  (function(){
+    function ready(fn){
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+      else fn();
+    }
+    ready(function(){
+      var btn = document.getElementById('write-dev');
+      if (!btn) return;
+
+      var today = new Date().toISOString().slice(0,10);
+
+      // Frontmatter 템플릿
+      var frontmatter = [
+        '---',
+        'title: "제목"',
+        'date: "' + today + '"',
+        'tags: []',
+        'draft: false',
+        'summary: ""',
+        '---',
+        '',
+        '여기에 본문을 작성하세요.',
+        ''
+      ].join('\n');
+
+      function build(path, filename, content){
+        var url = new URL('https://github.com/kjk1208/kjk1208.github.io/new/main/' + path);
+        url.searchParams.set('filename', filename);
+        url.searchParams.set('value', content);
+        return url.toString();
+      }
+
+      // 버튼 링크 설정
+      btn.href = build('src/content/dev', today + '-my-post.mdx', frontmatter);
+    });
+  })();
+  </script>
 </DocsLayout>
