@@ -16,6 +16,16 @@ export default function RichTextEditor({ value, onChange, placeholder = "내용�
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Hoisted helper to avoid "Cannot access before initialization" when used inside useMemo
+  function parseInlineMarkdown(text: string): string {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/__(.*?)__/g, '<u>$1</u>')
+      .replace(/`(.*?)`/g, '<code class="bg-muted px-1 rounded text-sm">$1</code>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-500 underline hover:text-blue-700" target="_blank" rel="noopener noreferrer">$1</a>');
+  }
+
   const insertText = (before: string, after: string = '') => {
     if (!textareaRef.current) return;
     
@@ -153,16 +163,6 @@ export default function RichTextEditor({ value, onChange, placeholder = "내용�
 
     return parsedLines.join('\n');
   }, [value, images]);
-
-  // Helper function for inline markdown parsing
-  const parseInlineMarkdown = (text: string): string => {
-    return text
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/__(.*?)__/g, '<u>$1</u>')
-      .replace(/`(.*?)`/g, '<code class="bg-muted px-1 rounded text-sm">$1</code>')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-500 underline hover:text-blue-700" target="_blank" rel="noopener noreferrer">$1</a>');
-  };
 
   return (
     <div className="space-y-4">
